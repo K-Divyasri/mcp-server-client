@@ -15,10 +15,8 @@
 # configured anywhere in this workflow, and none is needed.
 #
 # WHERE THIS FILE GOES: copy it to ".github/workflows/tests.yml" at the ROOT
-# of your repo. This project publishes the WHOLE project folder (with
-# build_from_scratch/ as a subfolder, same shape as the rest of the AI
-# track), so the package and its tests live one level down -- that's why the
-# steps below run inside build_from_scratch via "working-directory".
+# of your repo. The package and its tests live at the repo root, so the
+# steps below run from there with no "working-directory".
 
 name: tests
 
@@ -32,10 +30,6 @@ jobs:
     # mcp, anthropic, requests), so it passes here the same as on Windows.
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: build_from_scratch
-
     steps:
       # Step 1: pull the repo's code onto the runner.
       - name: Check out the code
@@ -47,7 +41,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: build_from_scratch/requirements.txt
+          cache-dependency-path: requirements.txt
 
       # Step 3: install the project's dependencies. requirements.txt already
       # includes pytest, so this one install is everything the suite needs.
@@ -55,7 +49,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       # Step 4: seed the notes database. data/ is git-ignored (regenerated,
-      # not committed -- see build_from_scratch/.gitignore), and several
+      # not committed -- see .gitignore), and several
       # tests build their own temp DB via conftest.py fixtures regardless,
       # but generating it here mirrors what a fresh clone needs to do before
       # `python -m mcp_kb tools` or `serve` will have any notes to show.

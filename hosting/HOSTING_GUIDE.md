@@ -18,12 +18,9 @@ Here is the whole plan:
 5. **(Stretch) Remote HTTP hosting** -- a Dockerfile so someone else could point an MCP
    client at a real URL, the roadmap's own stretch goal ("publish it so others can install it").
 
-A note on layout before you start: the repo root will be the **whole project folder**
-(`24-mcp-server-client/`), with the real, tested code one level down in
-`build_from_scratch/`. That is the same shape every other finished project on this track
-uses (see `26-llm-cost-optimizer/` or `15-productionize-research-agent/` if you want a
-second example) -- it is why almost every command below carries a `build_from_scratch/`
-prefix. Keep an eye on that; it is the one thing that trips people up.
+A note on layout before you start: the repo root is the real, tested code itself --
+`mcp_kb/`, `tests/`, `generate_data.py`, and `requirements.txt` sit directly at the root,
+next to this `hosting/` folder. Every command below runs from that repo root.
 
 ---
 
@@ -53,7 +50,7 @@ lives on the internet. You need both.
 
 ## Step 1 -- Know what goes in the repo and what must not
 
-`build_from_scratch/.gitignore` already exists and excludes the things that should never be
+`.gitignore` already exists and excludes the things that should never be
 committed:
 
 ```
@@ -70,20 +67,18 @@ The two worth understanding:
 - **`.env`** -- if you ever set `ANTHROPIC_API_KEY` to try `ask --real`, this file holds a
   real secret. A key is a password. Commit it and it is on the public internet forever
   (Git keeps history; deleting it in a later commit does not erase it, and bots scrape
-  GitHub for leaked keys within minutes). The repo ships `build_from_scratch/.env.example`
+  GitHub for leaked keys within minutes). The repo ships `.env.example`
   instead, listing the variable names with blank values -- that one is safe and meant to be
   committed.
 - **`data/`** -- the seeded `notes.db` is generated, not authored, so it is not committed.
   `generate_data.py` recreates it deterministically (same 15 notes, same 18 tags) on any
   machine, any time -- that is Step 2 below.
 
-You will also want a root-level `.gitignore` (a separate file, at `24-mcp-server-client/`,
-since that is the actual repo root) with at least the same lines plus the root-level
-version of the secret file:
+You will also want the repo root `.gitignore` (the same file as above) to carry a few more
+common lines:
 
 ```
 .env
-build_from_scratch/.env
 __pycache__/
 *.pyc
 .venv/
@@ -100,10 +95,9 @@ secrets and machine-specific junk (venvs, caches, the generated notes database) 
 
 ## Step 2 -- Install it locally and seed the data
 
-From the project root:
+From the repo root:
 
 ```powershell
-cd build_from_scratch
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -131,15 +125,14 @@ You should see 4 tools (`search_notes`, `add_note`, `list_tags`, `get_weather`),
 completely normal with no key set).
 
 If you would rather install it as an editable package (so `mcp_kb` is importable from any
-folder, not just from inside `build_from_scratch/`), use `pip install -e .` instead of `pip
+folder, not just from the repo root), use `pip install -e .` instead of `pip
 install -r requirements.txt`. Either way works for everything in this guide; the editable
 install is only worth doing if you plan to run `python -m mcp_kb ...` from somewhere other
-than `build_from_scratch/` itself.
+than the repo root.
 
 Then push it, the same way as every other project on this track:
 
 ```powershell
-cd ..
 git init
 git add .
 git commit -m "Initial commit: PersonalKB, an MCP server + client"
@@ -216,7 +209,7 @@ you need to replace:
       "command": "C:\\Users\\divya\\miniconda3\\python.exe",
       "args": ["-m", "mcp_kb.server"],
       "env": {
-        "PYTHONPATH": "C:\\Users\\divya\\Downloads\\learning\\ai\\24-mcp-server-client\\build_from_scratch"
+        "PYTHONPATH": "C:\\path\\to\\mcp-server-client"
       }
     }
   }
@@ -224,7 +217,7 @@ you need to replace:
 ```
 
 Replace `command` with the exact path Step 3a printed, and replace the `PYTHONPATH` value
-with the absolute path to **your own** `build_from_scratch/` folder. Windows JSON needs
+with the absolute path to **your own** clone of this repo (the repo root). Windows JSON needs
 double backslashes (`\\`) in paths, as shown above.
 
 **Why the `PYTHONPATH` entry, and not a `cwd` field:** the official docs' own config
@@ -232,17 +225,17 @@ examples (both linked above) only ever show three keys on a server entry -- `com
 `args`, and `env` -- there is no `cwd` key anywhere in them. Without it, `python -m
 mcp_kb.server` needs to find the `mcp_kb` package somehow, and the only two ways to do that
 without an editable install are (a) run with the working directory already set to
-`build_from_scratch/`, which Claude Desktop's config has no field for, or (b) tell Python
+the repo root, which Claude Desktop's config has no field for, or (b) tell Python
 where to look via `PYTHONPATH`, which it does have a field for (`env`). This was verified
 directly: running `python -m mcp_kb.server` from an unrelated folder with no `PYTHONPATH`
 set fails with `ModuleNotFoundError: No module named 'mcp_kb'`; setting `PYTHONPATH` to the
-absolute `build_from_scratch/` path fixes it from any working directory. The docs'
+absolute repo root path fixes it from any working directory. The docs'
 own troubleshooting section uses this exact same trick for a different problem (a
 `${APPDATA}`-not-expanding issue with an `npx`-based server), by adding the resolved value
 into that server's own `env` block -- same idea, same mechanism, different variable.
 
 You do **not** need to set `MCP_KB_DB_PATH`. The server resolves its own database path
-from its own file location (`build_from_scratch/data/notes.db`), not from the process's
+from its own file location (`data/notes.db`), not from the process's
 working directory, so it finds the right file regardless of how Claude Desktop launched it.
 Two env vars worth adding if you want them, in the same `env` block as `PYTHONPATH`:
 
@@ -298,7 +291,7 @@ expect it to show up on your next `search_notes` call.
   exact same command Claude Desktop would run, with the same `PYTHONPATH` set:
 
   ```powershell
-  $env:PYTHONPATH = "C:\path\to\your\build_from_scratch"
+  $env:PYTHONPATH = "C:\path\to\your\mcp-server-client"
   C:\path\to\your\python.exe -m mcp_kb.server
   ```
 
@@ -330,8 +323,8 @@ git commit -m "Add CI: keyless pytest on every push"
 git push
 ```
 
-Open the repo's **Actions** tab. You should see it install `build_from_scratch/requirements.txt`,
-run `generate_data.py`, then `pytest tests -q` -- all inside `build_from_scratch/` -- ending
+Open the repo's **Actions** tab. You should see it install `requirements.txt`,
+run `generate_data.py`, then `pytest tests -q`, ending
 green with **40 passed, 1 skipped**. No `ANTHROPIC_API_KEY` or any other secret is
 configured anywhere in the workflow, and none is needed: `tests/test_agent_real.py` is
 decorated `@pytest.mark.skipif(not has_api_key(), ...)`, so it skips itself the instant the
@@ -360,8 +353,7 @@ Treat this section as documented-and-ready, not deployed-for-you.
 ### 5a. Build and run it locally first
 
 ```powershell
-copy hosting\Dockerfile build_from_scratch\Dockerfile
-cd build_from_scratch
+copy hosting\Dockerfile Dockerfile
 docker build -t personal-kb-mcp .
 docker run -p 8765:8765 personal-kb-mcp
 ```
@@ -377,17 +369,17 @@ Expect **406** (wrong method/headers -- this is correct and matches the protocol
 bug). A real client (or `mcp_kb ask --transport http --http-url http://127.0.0.1:8765/mcp`)
 completes a proper `initialize` handshake against the same URL and gets back
 `protocolVersion: "2025-06-18"` and `serverInfo.name: "PersonalKB"`. Delete the copied
-`Dockerfile` out of `build_from_scratch/` again afterward (`hosting/` is where it lives).
+`Dockerfile` out of the repo root again afterward (`hosting/` is where it lives).
 
 ### 5b. Deploy it -- Render (recommended, matches the rest of this AI track)
 
 This track's CI/CD project (`18-cicd-cloud-deployment/`) settled on Render's free tier as
 the default Docker host, so this project uses the same one for consistency:
 
-1. Push `build_from_scratch/Dockerfile` (the copy from 5a) to your GitHub repo.
+1. Push the root `Dockerfile` (the copy from 5a) to your GitHub repo.
 2. Sign up free at https://render.com (sign in with GitHub -- no credit card needed).
-3. **New** -> **Web Service**, connect your repo, set **Root Directory** to
-   `build_from_scratch`, runtime **Docker**. Render finds the `Dockerfile` there and builds
+3. **New** -> **Web Service**, connect your repo, leave **Root Directory**
+   blank (the repo root), runtime **Docker**. Render finds the `Dockerfile` there and builds
    it.
 4. Leave the health-check path **blank**. This server has no plain `GET /` route -- only
    `POST /mcp` with specific headers -- so a default health check expecting a 200 on `/`
@@ -412,7 +404,6 @@ someone.
 If you would rather use GCP:
 
 ```powershell
-cd build_from_scratch
 gcloud run deploy personal-kb-mcp --source . --region us-central1 --allow-unauthenticated
 ```
 
@@ -437,7 +428,7 @@ at https://console.anthropic.com immediately if you had pushed. Then untrack it 
 not erase it from history, which is exactly why you rotate rather than rely on deleting):
 
 ```powershell
-git rm --cached build_from_scratch\.env
+git rm --cached .env
 git commit -m "Remove committed .env"
 git push
 ```

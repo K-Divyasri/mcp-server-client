@@ -2,7 +2,7 @@
 
 This is the project's "definition of done." Walk it top to bottom. Do not tick a box you
 have not actually verified by running the command -- "should work" is not the same as
-"works." Commands assume you are inside `build_from_scratch/` unless noted.
+"works." Commands assume you are at the repo root unless noted.
 
 ## Runs locally, offline
 
@@ -18,9 +18,8 @@ have not actually verified by running the command -- "should work" is not the sa
 
 ## Secrets are clean
 
-- [ ] `build_from_scratch/.gitignore` contains `.env`, `__pycache__/`, `.pytest_cache/`,
-      `data/`, `*.egg-info/`; the root `.gitignore` contains `.env` and
-      `build_from_scratch/.env` too.
+- [ ] `.gitignore` contains `.env`, `__pycache__/`, `.pytest_cache/`,
+      `data/`, `*.egg-info/`.
 - [ ] `git status` shows `.env` is NOT tracked.
 - [ ] `git ls-files` contains no bare `.env` (only `.env.example`).
 - [ ] No API key is hardcoded anywhere in the source.
@@ -30,8 +29,8 @@ have not actually verified by running the command -- "should work" is not the sa
 - [ ] Repo created empty on github.com (no auto README/license), named `personal-kb-mcp`
       (or your own choice), public.
 - [ ] `git init` -> `git add .` -> `git commit` -> `git branch -M main` ->
-      `git remote add origin ...` -> `git push -u origin main`, run from the **project
-      root** (`24-mcp-server-client/`), not from inside `build_from_scratch/`.
+      `git remote add origin ...` -> `git push -u origin main`, run from the **repo
+      root**.
 - [ ] Files visible on the GitHub repo page after a refresh.
 
 ## CI is green and keyless
@@ -50,7 +49,7 @@ This is the one that actually matters most for this project -- do not skip it.
       `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) has a
       `personal-kb` entry under `mcpServers`, with `command` as the full, absolute path to
       your Python executable and `env.PYTHONPATH` as the full, absolute path to your own
-      `build_from_scratch/` folder.
+      clone of this repo (the repo root).
 - [ ] Claude Desktop was fully quit and restarted (not just the window closed) after saving
       the config.
 - [ ] A new chat shows PersonalKB's tools under the tool/hammer indicator.
@@ -65,14 +64,14 @@ This is the one that actually matters most for this project -- do not skip it.
 ## (Optional) Deployed the HTTP server remotely
 
 - [ ] `docker build -t personal-kb-mcp .` succeeds locally, with `hosting/Dockerfile`
-      copied into `build_from_scratch/` first.
+      copied into the repo root first.
 - [ ] `docker run -p 8765:8765 personal-kb-mcp` starts; `curl http://127.0.0.1:8765/mcp`
       returns 406 (correct: it needs a real POST + `initialize` body, not a browser GET).
 - [ ] A real MCP client (or `python -m mcp_kb ask --transport http --http-url
       http://127.0.0.1:8765/mcp "..."`) completes a real `initialize` handshake against the
       running container.
-- [ ] The copied `Dockerfile` was removed from `build_from_scratch/` again afterward, so
-      that folder stays exactly the pytest-verified package.
+- [ ] The copied `Dockerfile` was removed from the repo root again afterward, so
+      the root stays exactly the pytest-verified package.
 - [ ] (Only if you actually deployed it) a public URL from Render or Cloud Run answers the
       same way a local container does, and `MCP_KB_HTTP_HOST=0.0.0.0` is set (it is, by
       default, in `hosting/Dockerfile`).

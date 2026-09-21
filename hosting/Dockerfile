@@ -1,11 +1,10 @@
 # Dockerfile for the OPTIONAL remote/HTTP hosting path (the roadmap's stretch
 # goal: "publish it so others can install it"). This is the one file in
 # hosting/ that is not meant to live here permanently -- copy it INTO
-# build_from_scratch/ before building, so build_from_scratch/ stays exactly
+# the repo root before building, so the repo root stays exactly
 # the pytest-verified package with nothing extra sitting in it:
 #
-#   copy hosting\Dockerfile build_from_scratch\Dockerfile
-#   cd build_from_scratch
+#   copy hosting\Dockerfile Dockerfile
 #   docker build -t personal-kb-mcp .
 #   docker run -p 8765:8765 personal-kb-mcp
 #
@@ -38,7 +37,7 @@ ENV MCP_KB_HTTP_PORT=8765
 
 # Seed the notes database at build time, so the image is self-contained and
 # has notes to search on its very first request (data/ is git-ignored in
-# the source repo -- see build_from_scratch/.gitignore -- this is what
+# the source repo -- see .gitignore -- this is what
 # regenerates it inside the image).
 RUN python generate_data.py
 
